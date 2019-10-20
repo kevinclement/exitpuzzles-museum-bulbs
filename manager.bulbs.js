@@ -14,16 +14,23 @@ module.exports = class HandsManager extends Manager {
 
         // setup supported commands
         handlers['hands.toggle'] = (s,cb) => { 
-            bt.write('mock');
+            this.on = !this.on
 
             // optimistic update to db, so it doesn't flip back and forth
-            ref.update({ mock: !this.mock })
+            ref.update({ on: this.on })
+
+            if (this.on && this.bulbs.isWhite) {
+                this.bulbs.on();
+            } else if (!this.on && !this.bulbs.isWhite) {
+                this.bulbs.off();
+            }
 
             cb();
         }
 
         this.ref = ref
         this.logger = opts.logger
+        this.on = false
     }
 
     activity() {

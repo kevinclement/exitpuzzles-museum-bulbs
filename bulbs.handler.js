@@ -92,7 +92,7 @@ function connect(bulb) {
         setTimeout( ()=>{
             console.log(`reconnecting ${b.friendly} now`);
             connect(b);
-        }, 10000)
+        }, 2000)
 
     })
 
