@@ -36,11 +36,8 @@ module.exports = class Bulbs {
 
   connectToBulbs() {
     const bulbs = require('./bulbs.devices');
-    forks.push(fork('/home/pi/code/server/bulbs.handler', bulbs.getBulbs(0,4),   {env: {NOBLE_HCI_DEVICE_ID: 0, DEBUG: process.env.DEBUG }}));
-    forks.push(fork('/home/pi/code/server/bulbs.handler', bulbs.getBulbs(4,8),   {env: {NOBLE_HCI_DEVICE_ID: 1, DEBUG: process.env.DEBUG }}));
-    forks.push(fork('/home/pi/code/server/bulbs.handler', bulbs.getBulbs(8,12),  {env: {NOBLE_HCI_DEVICE_ID: 2, DEBUG: process.env.DEBUG }}));
-    forks.push(fork('/home/pi/code/server/bulbs.handler', bulbs.getBulbs(12,16), {env: {NOBLE_HCI_DEVICE_ID: 3, DEBUG: process.env.DEBUG }}));
-    forks.push(fork('/home/pi/code/server/bulbs.handler', bulbs.getBulbs(16,18), {env: {NOBLE_HCI_DEVICE_ID: 4, DEBUG: process.env.DEBUG }}));
+    forks.push(fork('/home/pi/code/bulbs/bulbs.handler', bulbs.getBulbs(0,4),   {env: {NOBLE_HCI_DEVICE_ID: 1, DEBUG: process.env.DEBUG }}));
+    forks.push(fork('/home/pi/code/bulbs/bulbs.handler', bulbs.getBulbs(4,8),   {env: {NOBLE_HCI_DEVICE_ID: 2, DEBUG: process.env.DEBUG }}));
   }
 
   off()  {
