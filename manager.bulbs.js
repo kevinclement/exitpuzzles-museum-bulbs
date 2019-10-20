@@ -31,7 +31,7 @@ module.exports = class HandsManager extends Manager {
 
                     // once database is updated, connect bulbs
                     console.log(this.logPrefix + `connecting bulbs...`)
-                    //this.bulbs = new (require('./bulbs'))({ logger: opts.logger, fb:opts.fb })
+                    this.bulbs = new (require('./bulbs'))({ logger: opts.logger, fb:opts.fb })
                 });
                 
             });

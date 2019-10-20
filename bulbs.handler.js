@@ -5,22 +5,24 @@ let fb = new (require('./firebase'))
 let ref = fb.db.ref('museum/devices/bulbs/')
 
 //  TAKEAWAY: 
-//    connnects should match disconnects when initial connect is subtracted
+//    connects should match disconnects when initial connect is subtracted
 //    total time disconnected in MS
 //    can calculate total time connected (now - start) in MS
 //    can calculate perc disconnected by total - disconnected / total * 100
-// let stats = {
-//     start: "10/19/2019, 8:02:53 PM",
-//     totalDevices: 0,
-//     connects: 0,
-//     disconnects: 0,
-//     timeDisconnectedMS: 0
-// }
 
-// ref.on('value', (snapshot) => {
-//     let bulb = snapshot.val()
-//     if (bulb == null) return
-// });
+let stats = {
+    connects: 0,
+    disconnects: 0,
+    timeDisconnectedMS: 0
+}
+
+ref.child('stats').on('value', (snapshot) => {
+    let s = snapshot.val()
+
+    stats.connects = s.connects
+    stats.disconnects = s.disconnects
+    stats.timeDisconnectedMS = s.timeDisconnectedMS
+});
 
 let bulbs = {};
 process.argv.forEach((val, index) => {
@@ -55,16 +57,7 @@ exec(`hciconfig -a hci${DEV_ID} reset`, (error, stdout, stderr) => {
             noble.startScanning(['ffe5'])
         }
     })
-   
 });
-
-// // setup scanning
-// noble.on('stateChange', state => {
-//     if (state === 'poweredOn') {
-//         log(`Looking for bulbs...`)
-//         noble.startScanning(['ffe5'])
-//     }
-// })
 
 // handle commands
 process.on('message', (msg) => {
@@ -105,14 +98,7 @@ function connect(bulb) {
     let b = bulb;
 
     peripheral.once('disconnect', (err) => {
-        log(`${b.friendly} disconnected, reconnecting...`)
-
-        ref.child(b.friendly).set("disconnected");
-        setTimeout( ()=>{
-            console.log(`reconnecting ${b.friendly} now`);
-            connect(b);
-        }, 2000)
-
+        disconnected(b)
     })
 
     log(`connecting to ${b.friendly}`)
@@ -123,8 +109,7 @@ function connect(bulb) {
             err(`ERROR: ${error} for ${b.friendly}`)
             ref.child(b.friendly).set("error");
         } else {
-            ref.child(b.friendly).set("connected");
-            log(`${b.friendly} connected`)
+            connected(b);
         }
         
         if (!b.wrote && b.data) {
@@ -132,6 +117,32 @@ function connect(bulb) {
             write(b)
         }
     })
+}
+
+function connected(b) {
+    log(`${b.friendly} connected`)
+    ref.child(b.friendly).set("connected");
+
+    let now = new Date()
+    let time_disconnected_in_ms = b.disconnected ? now - b.disconnected : 0
+    b.disconnected = false
+    ref.child('stats').update({
+        connects: stats.connects + 1,
+        timeDisconnectedMS: stats.timeDisconnectedMS + time_disconnected_in_ms
+    });
+}
+
+function disconnected(b) {
+    log(`${b.friendly} disconnected, reconnecting...`)
+    b.disconnected = new Date()
+    ref.child(b.friendly).set("disconnected");
+    ref.child('stats').update({
+        disconnects: stats.disconnects + 1
+    });
+    setTimeout( ()=>{
+        console.log(`reconnecting ${b.friendly} now`);
+        connect(b);
+    }, 2000)
 }
 
 function write(bulb) {
