@@ -2,10 +2,29 @@ var noble = require('@abandonware/noble');
 const { colors } = require('./bulbs.color');
 const { exec } = require('child_process');
 let fb = new (require('./firebase'))
-let ref = fb.db.ref('museum/devices/bulb/')
+let ref = fb.db.ref('museum/devices/bulbs/')
+
+//  TAKEAWAY: 
+//    connnects should match disconnects when initial connect is subtracted
+//    total time disconnected in MS
+//    can calculate total time connected (now - start) in MS
+//    can calculate perc disconnected by total - disconnected / total * 100
+// let stats = {
+//     start: "10/19/2019, 8:02:53 PM",
+//     totalDevices: 0,
+//     connects: 0,
+//     disconnects: 0,
+//     timeDisconnectedMS: 0
+// }
+
+// ref.on('value', (snapshot) => {
+//     let bulb = snapshot.val()
+//     if (bulb == null) return
+// });
 
 let bulbs = {};
 process.argv.forEach((val, index) => {
+    
     if (index < 2) return;
 
     // format is -> name:color:friendly

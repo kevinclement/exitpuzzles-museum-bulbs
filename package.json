@@ -7,11 +7,11 @@
   "scripts": {
     "dev": "sudo node index.js",
     "verbose": "sudo DEBUG=true node index.js",
-    "tail": "tail -f /var/log/syslog | grep exitpuzzles-zoltar",
-    "stop": "sudo systemctl stop exitpuzzles.zoltar.service",
-    "start": "sudo systemctl start exitpuzzles.zoltar.service",
-    "restart": "sudo systemctl restart exitpuzzles.zoltar.service",
-    "status": "sudo systemctl status exitpuzzles.zoltar.service"
+    "tail": "tail -f /var/log/syslog | grep exitpuzzles-bulbs",
+    "stop": "sudo systemctl stop exitpuzzles.bulbs.service",
+    "start": "sudo systemctl start exitpuzzles.bulbs.service",
+    "restart": "sudo systemctl restart exitpuzzles.bulbs.service",
+    "status": "sudo systemctl status exitpuzzles.bulbs.service"
   },
   "dependencies": {
     "@abandonware/noble": "^1.9.2-5",
@@ -22,6 +22,6 @@
   "devDependencies": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kevinclement/museum-zoltar-server.git"
+    "url": "git+https://github.com/kevinclement/museum-bulbs-server.git"
   }
 }
