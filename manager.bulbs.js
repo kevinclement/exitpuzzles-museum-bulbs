@@ -22,7 +22,6 @@ module.exports = class HandsManager extends Manager {
                 // clear stats
                 ref.child('stats').update({
                     start: datestr,
-                    totalDevices: 0,
                     connects: 0,
                     disconnects: 0,
                     timeDisconnectedMS: 0
@@ -32,26 +31,22 @@ module.exports = class HandsManager extends Manager {
                     // once database is updated, connect bulbs
                     console.log(this.logPrefix + `connecting bulbs...`)
                     this.bulbs = new (require('./bulbs'))({ logger: opts.logger, fb:opts.fb })
+
+                    // watch the hands for either touching or mock
+                    opts.fb.db.ref('museum/devices/hands').on('value', (snapshot) => {
+                        let hands = snapshot.val();
+
+                        this.on == hands.touching || hands.mock
+
+                        if (this.on && this.bulbs.isWhite) {
+                            this.bulbs.on();
+                        } else if (!this.on && !this.bulbs.isWhite) {
+                            this.bulbs.off();
+                        }
+                    });
                 });
-                
             });
         });
-
-        // setup supported commands
-        handlers['hands.toggle'] = (s,cb) => { 
-            this.on = !this.on
-
-            // optimistic update to db, so it doesn't flip back and forth
-            ref.update({ on: this.on })
-
-            if (this.on && this.bulbs.isWhite) {
-                this.bulbs.on();
-            } else if (!this.on && !this.bulbs.isWhite) {
-                this.bulbs.off();
-            }
-
-            cb();
-        }
 
         this.ref = ref
         this.logger = opts.logger

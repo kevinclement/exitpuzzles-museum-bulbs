@@ -11,7 +11,9 @@
     "stop": "sudo systemctl stop exitpuzzles.bulbs.service",
     "start": "sudo systemctl start exitpuzzles.bulbs.service",
     "restart": "sudo systemctl restart exitpuzzles.bulbs.service",
-    "status": "sudo systemctl status exitpuzzles.bulbs.service"
+    "status": "sudo systemctl status exitpuzzles.bulbs.service",
+    "enable": "sudo systemctl enable exitpuzzles.bulbs.service",
+    "disable": "sudo systemctl disable exitpuzzles.bulbs.service"
   },
   "dependencies": {
     "@abandonware/noble": "^1.9.2-5",
