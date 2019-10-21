@@ -1,14 +1,7 @@
-var noble = require('@abandonware/noble');
+const { exec } = require('promisify-child-process');
 const { colors } = require('./bulbs.color');
-const { exec } = require('child_process');
 let fb = new (require('./firebase'))
 let ref = fb.db.ref('museum/devices/bulbs/')
-
-//  TAKEAWAY: 
-//    connects should match disconnects when initial connect is subtracted
-//    total time disconnected in MS
-//    can calculate total time connected (now - start) in MS
-//    can calculate perc disconnected by total - disconnected / total * 100
 
 let stats = {
     connects: 0,
@@ -18,45 +11,35 @@ let stats = {
 
 ref.child('stats').on('value', (snapshot) => {
     let s = snapshot.val()
-
     stats.connects = s.connects
     stats.disconnects = s.disconnects
     stats.timeDisconnectedMS = s.timeDisconnectedMS
 });
 
 let bulbs = {};
+let running = 0;
+const DEV_ID = process.env.DEVICE_ID
+var prefix = DEV_ID + ":"
+
 process.argv.forEach((val, index) => {
-    
     if (index < 2) return;
 
-    // format is -> name:color:friendly
+    // format is -> name:color:friendly:addr
     let parts = val.split(':');
     let name = parts[0];
     let color = parts[1];
     let friendly = parts[2];
+    let addr = parts[3].replace(/-/g, ':');
 
-    bulbs[name] = { color: color, friendly: friendly }
+    bulbs[name] = { color: color, friendly: friendly, addr:addr }
 });
-
-var bulbsFound = 0;
-const DEV_ID = process.env.NOBLE_HCI_DEVICE_ID
-var prefix = DEV_ID + ":"
-const white = Buffer.from([0x56, 0x00, 0x00, 0x00, 0xff, 0x0f, 0xaa, 0x3b, 0x07, 0x00, 0x01])
 
 // reset devices
 exec(`hciconfig -a hci${DEV_ID} reset`, (error, stdout, stderr) => {
     if (error) {
-      err(`exec error: ${error}`);
+      console.log(`${prefix} exec error: ${error}`);
       return;
     }
-
-    // setup scanning
-    noble.on('stateChange', state => {
-        if (state === 'poweredOn') {
-            log(`Looking for bulbs...`)
-            noble.startScanning(['ffe5'])
-        }
-    })
 });
 
 // handle commands
@@ -66,152 +49,54 @@ process.on('message', (msg) => {
     } else if (msg.cmd == 'off') {
         turnOff();
     } else if (msg.cmd == 'color') {
-        changeAll(msg.color, false);
+        turnColor(msg.color);
     }
 });
 
-noble.on('discover', peripheral => {
-    const name = peripheral.advertisement.localName
+function changeColor(addr, color) {
+    console.log(`${prefix} change color: ${addr} ${color}`)
+    running++;
 
-    if (name in bulbs) {
-      bulbsFound++;
-
-      log(`  found ${bulbs[name].friendly}`)
-
-      bulbs[name].p = peripheral
-
-      if (bulbsFound == Object.keys(bulbs).length) {
-        log(`All bulbs found, discovering now`)
-
-        noble.stopScanning()
-
-        // connect all
-        for (var n in bulbs) {
-            connect(bulbs[n])
-        }
+    let proc = exec(`/usr/bin/gatttool -i hci${DEV_ID} -b ${addr} --char-write-req -a 0x000b -n ${color}`);
+    let pid = proc.pid;
+  
+    proc.then(({ stdout, stderr }) => {
+      running--;
+      if (running == 0) {
+        console.log(`${prefix} finished color change`)
       }
-    }
-})
+    }).catch((err) => {
+        running--;
 
-function connect(bulb) {
-    let peripheral = bulb.p;
-    let b = bulb;
+        console.log(`${prefix} err: ${pid} ${err}`)
+        console.log(`${prefix} still running: ${running} `)
 
-    peripheral.once('disconnect', (err) => {
-        disconnected(b)
+        setTimeout(()=> {
+            console.log(`${prefix} RETRYING ${addr} in 1s...`)
+            changeColor(addr, color)
+        }, 1000)
     })
-
-    log(`connecting to ${b.friendly}`)
-    ref.child(b.friendly).set("connecting");
-
-    peripheral.connect(error => {
-        if (error) {
-            err(`ERROR: ${error} for ${b.friendly}`)
-            ref.child(b.friendly).set("error");
-        } else {
-            connected(b);
-        }
-        
-        if (!b.wrote && b.data) {
-            log(`didnt write data, writing now`)
-            write(b)
-        }
-    })
-}
-
-function connected(b) {
-    log(`${b.friendly} connected`)
-    ref.child(b.friendly).set("connected");
-
-    let now = new Date()
-    let time_disconnected_in_ms = b.disconnected ? now - b.disconnected : 0
-    b.disconnected = false
-    ref.child('stats').update({
-        connects: stats.connects + 1,
-        timeDisconnectedMS: stats.timeDisconnectedMS + time_disconnected_in_ms
-    });
-}
-
-function disconnected(b) {
-    log(`${b.friendly} disconnected, reconnecting...`)
-    b.disconnected = new Date()
-    ref.child(b.friendly).set("disconnected");
-    ref.child('stats').update({
-        disconnects: stats.disconnects + 1
-    });
-    setTimeout( ()=>{
-        console.log(`reconnecting ${b.friendly} now`);
-        connect(b);
-    }, 2000)
-}
-
-function write(bulb) {
-    let b = bulb;
-
-    if (!b.p || b.p.state != "connected") {
-        log(`not connected to ${b.friendly}, ignoring write`);
-        return;
-    }
-
-    b.p.writeHandle(0x000b, b.data, false, error => {
-        if (error) {
-            err(`BLE: Write Error for ${b.friendly}: ${error}`)
-        } else {
-            //log(`wrote: updating ${b.friendly} (${b.p.address})`)
-            b.wrote = true;
-            b.data = null;
-        }
-    });
-}
-
-function changeAll(color) {
-    let keys = Object.keys(bulbs)
-    for (let i=0; i<keys.length; i++) {
-        let hex = colors.toHex(color)
-
-        const col = Buffer.from([0x56, hex.r, hex.g, hex.b, 0x00, 0xf0, 0xaa, 0x3b, 0x07, 0x00, 0x01])
-        let bulb = bulbs[keys[i]];
-
-        bulb.data = col;
-        bulb.wrote = false;
-        bulb.hex = hex;
-
-        write(bulb)
-    }
-}
+  }
 
 function turnOn() {
     for (let n in bulbs) {
         let bulb =  bulbs[n];
-
-        let hex = colors.toHex(bulb.color)
-        const col = Buffer.from([0x56, hex.r, hex.g, hex.b, 0x00, 0xf0, 0xaa, 0x3b, 0x07, 0x00, 0x01])
-
-        bulb.data = col;
-        bulb.wrote = false;
-        bulb.hex = hex;
-
-        write(bulb);
+        let color = colors.toSend(bulb.color)
+        changeColor(bulb.addr, color)
     }
 }
 
 function turnOff() {
     for (let n in bulbs) {
         let bulb =  bulbs[n];
-
-        bulb.data = white;
-        bulb.wrote = false;
-        bulb.hex = { r:0, g:0, b:0 };
-
-        write(bulb);
+        let color = colors.toSend('white')
+        changeColor(bulb.addr, color)
     }
 }
 
-function log(str) {
-    if (process.env.DEBUG) {
-        console.log(`${prefix} ${str}`)
+function turnColor(color) {
+    for (let n in bulbs) {
+        let bulb =  bulbs[n];
+        changeColor(bulb.addr, color)
     }
-}
-function err(str) {
-    console.log(`${prefix} ${str}`)
 }

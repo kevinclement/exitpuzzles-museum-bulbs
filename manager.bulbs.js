@@ -36,7 +36,7 @@ module.exports = class HandsManager extends Manager {
                     opts.fb.db.ref('museum/devices/hands').on('value', (snapshot) => {
                         let hands = snapshot.val();
 
-                        this.on == hands.touching || hands.mock
+                        this.on = hands.touching || hands.mock
 
                         if (this.on && this.bulbs.isWhite) {
                             this.bulbs.on();

@@ -38,8 +38,8 @@ module.exports = class Bulbs {
   // we need to use the two usb ones.  To verify, cat /sys/class/bluetooth/hci0/device/uevent.  Should see DEVTYPE=usb_interface
   connectToBulbs() {
     const bulbs = require('./bulbs.devices');
-    forks.push(fork('/home/pi/code/bulbs/bulbs.handler', bulbs.getBulbs(0,9),   {env: {NOBLE_HCI_DEVICE_ID: 0, DEBUG: process.env.DEBUG }}));
-    forks.push(fork('/home/pi/code/bulbs/bulbs.handler', bulbs.getBulbs(9,18),   {env: {NOBLE_HCI_DEVICE_ID: 1, DEBUG: process.env.DEBUG }}));
+    forks.push(fork('/home/pi/code/bulbs/bulbs.handler', bulbs.getBulbs(0,9),   {env: {DEVICE_ID: 0, DEBUG: process.env.DEBUG }}));
+    forks.push(fork('/home/pi/code/bulbs/bulbs.handler', bulbs.getBulbs(9,18),   {env: {DEVICE_ID: 1, DEBUG: process.env.DEBUG }}));
   }
 
   off()  {
