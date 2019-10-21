@@ -18,7 +18,7 @@ module.exports = class HandsManager extends Manager {
 
             ref.child('archive').child(datestr).set(stats).then((e) => {
                 console.log(this.logPrefix + `stats archived to ${datestr}.`)
-    
+
                 // clear stats
                 ref.child('stats').update({
                     start: datestr,
@@ -29,7 +29,7 @@ module.exports = class HandsManager extends Manager {
                     console.log(this.logPrefix + `stats reset.`)
 
                     // once database is updated, connect bulbs
-                    console.log(this.logPrefix + `connecting bulbs...`)
+                    console.log(this.logPrefix + `spawning bulb processes...`)
                     this.bulbs = new (require('./bulbs'))({ logger: opts.logger, fb:opts.fb })
 
                     // watch the hands for either touching or mock
