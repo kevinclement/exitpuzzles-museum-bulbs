@@ -29,7 +29,7 @@ fb.db.ref('.info/connected').on('value', function(connectedSnap) {
 
 // listen for control operations in the db, filter only ops not completed
 fb.db.ref('museum/operations').orderByChild('completed').equalTo(null).on("child_added", function(snapshot) {
-    logger.log('pi: received op ' + snapshot.val().command);
+    logger.log('bulbs: received op ' + snapshot.val().command);
 
     managers.forEach((m) => {
         m.handle(snapshot);

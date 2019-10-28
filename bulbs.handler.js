@@ -2,9 +2,6 @@ const { exec } = require('promisify-child-process');
 const { colors } = require('./bulbs.color');
 let fb = new (require('./firebase'))
 let ref = fb.db.ref('museum/devices/bulbs/')
-const EventEmitter = require('events');
-class MyEmitter extends EventEmitter {}
-const myEmitter = new MyEmitter();
 
 let stats = {
     connects: 0,
@@ -38,14 +35,6 @@ process.argv.forEach((val, index) => {
     bulbs[name] = { color: color, friendly: friendly, addr:addr }
 });
 
-// reset devices
-function reset() {  
-    exec(`hciconfig -a hci${DEV_ID} reset`).then((error, stdout, stderr) => {
-      log(`### RESET: device reset finished`)  
-      myEmitter.emit('reset');
-    });
-}
-
 // handle commands
 process.on('message', (msg) => {
     if (msg.cmd == 'on') {
@@ -72,7 +61,6 @@ function changeColor(addr, color) {
       running--;
       if (running == 0) {
         log(`### COLOR: finished color change`)
-        //reset()
       }
       removedFinishedProcs();
     }).catch((err) => {
@@ -85,17 +73,11 @@ function changeColor(addr, color) {
 
         if (proc.killed) {
             if (running == 0) {
-                log(`proc killed.  resetting.`)
-                //reset()
+                log(`proc killed.`)
             }
         } else {
             changeColor(addr, color)
         }
-
-        // setTimeout(()=> {
-        //     log(`RETRYING ${addr} in 1s...`)
-        //     changeColor(addr, color)
-        // }, 1000)
     })
 
     procs.push(proc);
@@ -115,9 +97,6 @@ function cleanupProcesses(cb) {
 
         removedFinishedProcs()
         cb()
-
-        // wait for reset to be done before doing next one
-        //myEmitter.once('reset', cb);
     } else {
         cb()
     }
@@ -156,8 +135,4 @@ function log(str) {
     if (process.env.DEBUG) {
         console.log(`${prefix} ${str}`)
     }
-}
-
-function err(str) {
-    console.log(`${prefix} ${str}`)
 }
