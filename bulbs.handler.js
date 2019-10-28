@@ -3,19 +3,6 @@ const { colors } = require('./bulbs.color');
 let fb = new (require('./firebase'))
 let ref = fb.db.ref('museum/devices/bulbs/')
 
-let stats = {
-    connects: 0,
-    disconnects: 0,
-    timeDisconnectedMS: 0
-}
-
-ref.child('stats').on('value', (snapshot) => {
-    let s = snapshot.val()
-    stats.connects = s.connects
-    stats.disconnects = s.disconnects
-    stats.timeDisconnectedMS = s.timeDisconnectedMS
-});
-
 let bulbs = {};
 let running = 0;
 var procs = [];
@@ -50,8 +37,8 @@ function removedFinishedProcs() {
     procs = procs.filter(proc => proc.exitCode == null || proc.killed);
 }
 
-function changeColor(addr, color) {
-    log(`change color: ${addr} ${color}`)
+function changeColor(addr, friendly, color, colorFriendly) {
+    log(`change color: ${friendly} [${addr}]`)
     running++;
 
     let proc = exec(`/usr/bin/gatttool -i hci${DEV_ID} -b ${addr} --char-write-req -a 0x000b -n ${color}`);
@@ -62,6 +49,10 @@ function changeColor(addr, color) {
       if (running == 0) {
         log(`### COLOR: finished color change`)
       }
+
+      // update the database with new color
+      ref.child(friendly).update({ color: colorFriendly})
+
       removedFinishedProcs();
     }).catch((err) => {
         running--;
@@ -76,7 +67,7 @@ function changeColor(addr, color) {
                 log(`proc killed.`)
             }
         } else {
-            changeColor(addr, color)
+            changeColor(addr, friendly, color, colorFriendly)
         }
     })
 
@@ -108,7 +99,7 @@ function turnOn() {
         for (let n in bulbs) {
             let bulb =  bulbs[n];
             let color = colors.toSend(bulb.color)
-            changeColor(bulb.addr, color)
+            changeColor(bulb.addr, bulb.friendly, color, bulb.color)
         }
     })
 }
@@ -119,7 +110,7 @@ function turnOff() {
         for (let n in bulbs) {
             let bulb =  bulbs[n];
             let color = colors.toSend('white')
-            changeColor(bulb.addr, color)
+            changeColor(bulb.addr, bulb.friendly, color, 'white')
         }
     })
 }
@@ -127,7 +118,7 @@ function turnOff() {
 function turnColor(color) {
     for (let n in bulbs) {
         let bulb =  bulbs[n];
-        changeColor(bulb.addr, color)
+        changeColor(bulb.addr, bulb.friendly, color, color)
     }
 }
 
