@@ -7,22 +7,22 @@ managers.push(new (require('./manager.bulbs'))({ name: 'bulbs', logger: logger, 
 // might want to turn this off while doing dev, so I have a flag for it
 let ENABLE_FIREBASE_LOGS = true;
 if (ENABLE_FIREBASE_LOGS) {
-    logger.enableFirebase(fb.db);
+  logger.enableFirebase(fb.db, 'museum/logs/bulbs');
 }
 
-logger.log('pi: Started ExitPuzzles Bulbs server.');
+logger.log('bulbs: Started ExitPuzzles Bulbs server.');
 
 // track firebase connect and disconnects and log them so we can see how often it happens
 let _connecting = true;
 fb.db.ref('.info/connected').on('value', function(connectedSnap) {
   if (connectedSnap.val() === true) {
-    logger.log('pi: firebase connected.');
+    logger.log('bulbs: firebase connected.');
   } else {
     // dont print an error while its still connecting on first start
     if (_connecting) {
       _connecting = false;
     } else {
-      logger.log('pi: firebase dropped connection!');
+      logger.log('bulbs: firebase dropped connection!');
     }
   }
 });
