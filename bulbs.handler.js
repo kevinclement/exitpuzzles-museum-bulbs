@@ -40,8 +40,15 @@ function removedFinishedProcs() {
 function changeColor(addr, friendly, color, colorFriendly) {
     log(`change color: ${friendly} [${addr}]`)
     running++;
-
-    let proc = exec(`/usr/bin/gatttool -i hci${DEV_ID} -b ${addr} --char-write-req -a 0x000b -n ${color}`);
+    
+    // if addr is wifi address, use python script
+    let proc;
+    if (addr.startsWith('192.')) {
+        proc = exec(`/usr/bin/python3 wiz.py ${colorFriendly}`);
+    } else {
+        proc = exec(`/usr/bin/gatttool -i hci${DEV_ID} -b ${addr} --char-write-req -a 0x000b -n ${color}`);
+    }
+    
     let pid = proc.pid;
   
     proc.then(({ stdout, stderr }) => {

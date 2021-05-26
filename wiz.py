@@ -9,11 +9,11 @@ from pywizlight import wizlight, PilotBuilder, discovery
 
 # allow to pass 'red' or 'white' as color in arguments, otherwise default to white
 color = sys.argv[1] if len(sys.argv) > 1 else "white" 
-if color != "white" and color != "red":
+if color != "white" and color != "red" and color != "r":
     color = "white"
 
 pb = PilotBuilder(warm_white = 255)
-if color == "red":
+if color == "red" or color == "r":
     pb = PilotBuilder(rgb = (255, 0, 0))
 
 pb.brightness = 255
