@@ -25,7 +25,8 @@ pb.speed = 100
 ###########################################
 
 async def main():
-    light = wizlight("192.168.1.26")
+    # 6.3
+    light = wizlight("192.168.1.200")
     await light.turn_on(pb)
 
 loop = asyncio.get_event_loop()
