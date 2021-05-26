@@ -25,6 +25,9 @@ let bulbs = [
     
     // This bulb went bad, replaced by wifi device
     "WIZ-63:r:6-3:192.168.1.200",              // 6-3  192.168.1.200
+
+    // This is extra build I setup "just in case"
+    // "museum-xtra:r:6-3:192.168.1.201",         // 6-x  192.168.1.200
 ]
 
 exports.getBulbs = function(start, end) {
