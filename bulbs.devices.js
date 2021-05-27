@@ -10,7 +10,9 @@ let bulbs = [
   
     "LEDBLE-78631A58:g:3-1:F8-1D-78-63-1A-58", // 3-1  F8:1D:78:63:1A:58
     "LEDBLE-78633FEC:b:3-2:F8-1D-78-63-3F-EC", // 3-2  F8:1D:78:63:3F:EC
-    "LEDBLE-78631C98:r:3-3:F8-1D-78-63-1C-98", // 3-3  F8:1D:78:63:1C:98
+    
+    // This bulb went bad, replaced by wifi device
+    "WIZ-63:r:6-3:192.168.1.200",              // 3-3  192.168.1.200
 
     "LEDBLE-78630D85:r:4-1:F8-1D-78-63-0D-85", // 4-1  F8:1D:78:63:0D:85
     "LEDBLE-78631C80:b:4-2:F8-1D-78-63-1C-80", // 4-2  F8:1D:78:63:1C:80
@@ -22,10 +24,8 @@ let bulbs = [
   
     "LEDBLE-78631D3E:r:6-1:F8-1D-78-63-1D-3E", // 6-1  F8:1D:78:63:1D:3E
     "LEDBLE-786310B1:b:6-2:F8-1D-78-63-10-B1", // 6-2  F8:1D:78:63:10:B1
+    "LEDBLE-786311CD:r:6-3:F8-1D-78-63-11-CD", // 6-3  F8:1D:78:63:11:CD
     
-    // This bulb went bad, replaced by wifi device
-    "WIZ-63:r:6-3:192.168.1.200",              // 6-3  192.168.1.200
-
     // This is extra build I setup "just in case"
     // "museum-xtra:r:6-3:192.168.1.201",         // 6-x  192.168.1.200
 ]
